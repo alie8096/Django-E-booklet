@@ -1,9 +1,13 @@
+import csv
+import os
 import markdown
 from pygments import highlight
 from pygments.lexers import get_lexer_by_name, TextLexer
 from pygments.formatters import HtmlFormatter
 import re
 from slugify import slugify
+import git
+from contextlib import contextmanager
 
 # Function to highlight code blocks
 def highlight_code(code, language):
@@ -74,7 +78,6 @@ def generate_toc_and_add_links(html_content):
 
     return final_content
 
-
 # Function to read markdown file and convert to HTML
 def convert_markdown_file(input_file, output_file, title):
     regex = r"([^\\]+)\.md$"
@@ -120,19 +123,70 @@ def convert_markdown_file(input_file, output_file, title):
 </html>
     """
 
+    output_dir = os.path.dirname(output_file)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     with open(output_file, 'w', encoding='utf-8') as file:
         file.write(html_template)
 
     print(f"Conversion complete. Check the {output_file} file.")
 
+# Function to get changed markdown files from git
+def get_changed_files():
+    repo = git.Repo('.')
+    changed_files = [item.a_path for item in repo.index.diff(None) if item.a_path.endswith('.md')]
+    return changed_files
 
-# Request input and output file paths from user
-input_file = input("Please enter the path to the markdown file: ")
-output_file = input("Please enter the path to save the HTML file: ")
-title = input("Please enter the title of the HTML file(example:two): ")
+@contextmanager
+def checkout(branch_name):
+    repo = git.Repo('.')
+    current_branch = repo.active_branch.name
+    try:
+        repo.git.checkout(branch_name)
+        yield
+    finally:
+        repo.git.checkout(current_branch)
 
-if not output_file.endswith(".html"):
-    output_file += ".html"
+# Main function to process CSV and convert changed files
+def main():
+    csv_file = 'files.csv'
+    changed_files = get_changed_files()
+    
+    with open(csv_file, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            input_file = row['input_file']
+            output_file = row['output_file']
+            title = row['title']
+            
+            if input_file in changed_files:
+                user_input = input(f"The file {input_file} has changed. Do you want to convert it? (yes/no): ")
+                if user_input.lower() == 'yes':
+                    convert_markdown_file(input_file, output_file, title)
 
-# Convert the markdown file to HTML
-convert_markdown_file(input_file, output_file, title)
+                    repo = git.Repo('.')
+                    try:
+                        # Create a temporary branch for the changes
+                        temp_branch = 'temp-html-changes'
+                        repo.git.checkout('-b', temp_branch)
+                        
+                        repo.git.add(output_file)
+                        repo.index.commit(f"Add {os.path.basename(output_file)} to seasons-html")
+                        
+                        repo.git.checkout('master')
+                        repo.git.pull('origin', 'master')
+                        repo.git.checkout(temp_branch, '--', output_file)
+                        repo.git.add(output_file)
+                        repo.index.commit(f"Add {os.path.basename(output_file)} to seasons-html")
+                        repo.git.push('origin', 'master')
+                        repo.git.branch('-d', temp_branch)
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+                    finally:
+                        repo.git.checkout('seasons-source')
+
+print("All tasks completed.")
+
+if __name__ == '__main__':
+    main()
