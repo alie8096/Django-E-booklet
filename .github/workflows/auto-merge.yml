@@ -1,0 +1,42 @@
+name: Auto Merge with Validation
+
+on:
+  pull_request:
+    branches:
+      - seasons-source
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Validate Pull Request
+        id: validate_pr
+        run: |
+          # Validate if the PR meets criteria here
+          # Example: Check for any unethical or out-of-structure changes
+          if grep -q -R "unethical_pattern" ${{ github.event.pull_request.head.repo.full_name }}; then
+            echo "::error::Pull Request contains unethical changes."
+            exit 1
+          fi
+          
+          # Example: Check for structural changes not allowed
+          if grep -q -R "structural_pattern" ${{ github.event.pull_request.head.repo.full_name }}; then
+            echo "::error::Pull Request contains structural changes not allowed."
+            exit 1
+          fi
+
+      - name: Merge Pull Request if Valid
+        if: steps.validate_pr.outcome == 'success'
+        uses: pascalgn/automerge-action@v0.14.3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          merge_method: squash
+
+      - name: Notify if Pull Request is Invalid
+        if: steps.validate_pr.outcome == 'failure'
+        run: |
+          echo "Validation failed for the Pull Request. Please review the comments and fix the issues."
