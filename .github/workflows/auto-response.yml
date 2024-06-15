@@ -13,12 +13,13 @@ jobs:
 
       - name: Respond to PR
         env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use github.token
         run: |
           echo "Pull Request received. Processing automated response."
           # Example: Check if the PR is targeting the seasons-source branch
           if [ "${{ github.event.pull_request.base.ref }}" == "seasons-source" ]; then
             echo "PR is targeting seasons-source branch. Adding automated response."
+            # Use GitHub CLI to add comment
             gh pr comment ${{ github.event.number }} --body "Automated response: Your PR targeting seasons-source branch has been reviewed."
           else
             echo "PR is not targeting seasons-source branch. No response added."
