@@ -32,9 +32,11 @@ jobs:
 
       - name: Convert Markdown to HTML
         run: |
+          shopt -s nullglob
           for file in season-*.md; do
-            python convertor.py $file converted_html/$(basename ${file%.md}.html) $(basename ${file%.md})
+            python convertor.py "$file" "converted_html/$(basename "${file%.md}.html")" "$(basename "${file%.md}")"
           done
+        shell: bash
 
       - name: Ensure converted_html directory is not empty
         run: |
@@ -48,9 +50,15 @@ jobs:
 
       - name: Copy converted files to master branch
         run: |
-          cp -r converted_html/* seasons-html/
-          git add seasons-html/
-          git commit -m "Update HTML files"
-          git push origin master
+          shopt -s nullglob
+          files=(converted_html/*)
+          if [ ${#files[@]} -gt 0 ]; then
+            cp -r converted_html/* seasons-html/
+            git add seasons-html/
+            git commit -m "Update HTML files"
+            git push origin master
+          else
+            echo "No HTML files found in converted_html/"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
