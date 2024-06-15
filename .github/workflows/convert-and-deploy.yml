@@ -23,9 +23,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Create converted_html directory if not exists
+        run: |
+          if [ ! -d "converted_html" ]; then
+            mkdir converted_html
+          fi
+        shell: bash
+
       - name: Convert Markdown to HTML
         run: |
-          mkdir converted_html
           for file in season-*.md; do
             python convertor.py $file converted_html/$(basename ${file%.md}.html) $(basename ${file%.md})
           done
