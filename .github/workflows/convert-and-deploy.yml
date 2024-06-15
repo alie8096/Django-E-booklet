@@ -1,0 +1,46 @@
+name: Convert and Deploy
+
+on:
+  push:
+    branches:
+      - seasons-source
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout seasons-source branch
+        uses: actions/checkout@v2
+        with:
+          ref: seasons-source
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Convert Markdown to HTML
+        run: |
+          mkdir converted_html
+          for file in season-*.md; do
+            python convertor.py $file converted_html/$(basename ${file%.md}.html) $(basename ${file%.md})
+          done
+
+      - name: Checkout master branch
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Copy converted files to master branch
+        run: |
+          cp -r converted_html/* seasons-html/
+          git add seasons-html/
+          git commit -m "Update HTML files"
+          git push origin master
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
