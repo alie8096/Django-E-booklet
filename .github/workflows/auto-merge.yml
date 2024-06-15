@@ -17,15 +17,15 @@ jobs:
         id: validate_pr
         run: |
           # Validate if the PR meets criteria here
-          # Example: Check for any unethical or out-of-structure changes
-          if grep -q -R "unethical_pattern" ${{ github.event.pull_request.head.repo.full_name }}; then
-            echo "::error::Pull Request contains unethical changes."
+          # Example: Check for any unethical changes
+          if grep -q -R "password" ${{ github.event.pull_request.head.repo.full_name }}; then
+            echo "::error::Pull Request contains unethical changes (e.g., password leak)."
             exit 1
           fi
           
           # Example: Check for structural changes not allowed
-          if grep -q -R "structural_pattern" ${{ github.event.pull_request.head.repo.full_name }}; then
-            echo "::error::Pull Request contains structural changes not allowed."
+          if grep -q -R "todo" ${{ github.event.pull_request.head.repo.full_name }}; then
+            echo "::error::Pull Request contains structural changes not allowed (e.g., adding TODOs)."
             exit 1
           fi
 
