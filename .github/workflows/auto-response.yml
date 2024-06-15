@@ -13,7 +13,7 @@ jobs:
 
       - name: Respond to PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           echo "Pull Request received. Processing automated response."
           # Example: Check if the PR is targeting the seasons-source branch
