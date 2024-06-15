@@ -30,7 +30,7 @@ jobs:
         id: automerge
         uses: pascalgn/automerge-action@v0.16.3
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           merge_method: merge
           commit_message: 'Auto-merged by GitHub Actions'
@@ -40,7 +40,7 @@ jobs:
         if: steps.automerge.outputs.result != 'merged'
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           script: |
             const { context } = require('@actions/github');
             github.issues.createComment({
