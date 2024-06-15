@@ -30,11 +30,15 @@ jobs:
             python convertor.py $file converted_html/$(basename ${file%.md}.html) $(basename ${file%.md})
           done
 
+      - name: Ensure converted_html directory is not empty
+        run: |
+          ls -l converted_html
+
       - name: Checkout master branch
         uses: actions/checkout@v2
         with:
           ref: master
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Copy converted files to master branch
         run: |
