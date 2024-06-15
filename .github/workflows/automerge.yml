@@ -30,7 +30,7 @@ jobs:
 
       - name: Auto-merge PR if no conflicts
         id: automerge
-        uses: pascalgn/automerge-action@v0.14.3
+        uses: pascalgn/automerge-action@v0.16.3
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
@@ -57,5 +57,6 @@ jobs:
         if: steps.automerge.outputs.result == 'merged'
         uses: peter-evans/close-pull-request@v2
         with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           pull-request-number: ${{ github.event.pull_request.number }}
           comment: 'This PR was auto-merged and is now closed.'
