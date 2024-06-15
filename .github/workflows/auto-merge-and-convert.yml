@@ -1,4 +1,4 @@
-name: Auto Merge
+name: Auto Merge and Convert
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - seasons-source
 
 jobs:
-  auto-merge:
+  auto-merge-and-convert:
     runs-on: ubuntu-latest
 
     steps:
@@ -41,3 +41,38 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/merge \
             -d '{"merge_method":"squash"}'
+
+      - name: Set up Python
+        if: steps.validate_pr.outputs.approved == 'true'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        if: steps.validate_pr.outputs.approved == 'true'
+        run: pip install -r requirements.txt
+
+      - name: Convert Markdown to HTML
+        if: steps.validate_pr.outputs.approved == 'true'
+        run: |
+          mkdir converted_html
+          for file in season-*.md; do
+            python convertor.py $file converted_html/$(basename ${file%.md}.html) $(basename ${file%.md})
+          done
+
+      - name: Checkout master branch
+        if: steps.validate_pr.outputs.approved == 'true'
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          persist-credentials: false
+
+      - name: Copy converted files to master branch
+        if: steps.validate_pr.outputs.approved == 'true'
+        run: |
+          cp -r converted_html/* seasons-html/
+          git add seasons-html/
+          git commit -m "Update HTML files"
+          git push origin master
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
