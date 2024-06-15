@@ -32,7 +32,7 @@ jobs:
       - name: Merge Pull Request if Approved
         if: steps.validate_pr.outputs.approved == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
           echo "Merging PR #$PR_NUMBER"
