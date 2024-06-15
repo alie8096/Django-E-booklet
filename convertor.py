@@ -4,6 +4,7 @@ from pygments.lexers import get_lexer_by_name, TextLexer
 from pygments.formatters import HtmlFormatter
 import re
 from slugify import slugify
+import sys
 
 # Function to highlight code blocks
 def highlight_code(code, language):
@@ -126,10 +127,10 @@ def convert_markdown_file(input_file, output_file, title):
     print(f"Conversion complete. Check the {output_file} file.")
 
 
-# Request input and output file paths from user
-input_file = input("Please enter the path to the markdown file: ")
-output_file = input("Please enter the path to save the HTML file: ")
-title = input("Please enter the title of the HTML file(example:two): ")
+# Read arguments from command line
+input_file = sys.argv[1]
+output_file = sys.argv[2]
+title = sys.argv[3]
 
 if not output_file.endswith(".html"):
     output_file += ".html"
