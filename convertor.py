@@ -4,7 +4,6 @@ from pygments.lexers import get_lexer_by_name, TextLexer
 from pygments.formatters import HtmlFormatter
 import re
 from slugify import slugify
-import sys
 
 # Function to highlight code blocks
 def highlight_code(code, language):
@@ -75,6 +74,7 @@ def generate_toc_and_add_links(html_content):
 
     return final_content
 
+
 # Function to read markdown file and convert to HTML
 def convert_markdown_file(input_file, output_file, title):
     regex = r"([^\\]+)\.md$"
@@ -125,14 +125,14 @@ def convert_markdown_file(input_file, output_file, title):
 
     print(f"Conversion complete. Check the {output_file} file.")
 
-# Use arguments passed to the script
-if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python convertor.py <input_file> <output_file> <title>")
-        sys.exit(1)
 
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
-    title = sys.argv[3]
+# Request input and output file paths from user
+input_file = input("Please enter the path to the markdown file: ")
+output_file = input("Please enter the path to save the HTML file: ")
+title = input("Please enter the title of the HTML file(example:two): ")
 
-    convert_markdown_file(input_file, output_file, title)
+if not output_file.endswith(".html"):
+    output_file += ".html"
+
+# Convert the markdown file to HTML
+convert_markdown_file(input_file, output_file, title)
