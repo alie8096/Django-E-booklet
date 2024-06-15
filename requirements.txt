@@ -1,4 +1,3 @@
 markdown
-Pygments
+pygments
 python-slugify
-gitpython
