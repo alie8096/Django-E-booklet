@@ -32,12 +32,10 @@ jobs:
       - name: Merge Pull Request if Approved
         if: steps.validate_pr.outputs.approved == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use github.token
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
           echo "Merging PR #$PR_NUMBER"
 
           # Merge the pull request using GitHub CLI
-          # Ensure GitHub CLI is installed in the environment
-          # Example assumes you have set up GitHub CLI previously
           gh pr merge $PR_NUMBER --squash --auto
