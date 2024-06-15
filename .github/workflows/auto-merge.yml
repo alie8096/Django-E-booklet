@@ -20,19 +20,22 @@ jobs:
       - name: Automerge
         uses: pascalgn/automerge-action@v0.14.3
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           merge_method: merge
-          commit_message: 'Auto-merged by GitHub Actions'
+          branch: main
           title: 'Auto-merge pull request'
           body: 'This PR was auto-merged by GitHub Actions'
 
-      - name: Close Pull Request
-        if: success()
+      - name: Confirm Merge and Close PR
         run: |
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-          curl -X PATCH \
-            -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+          REPO=$(jq --raw-output .repository.full_name "$GITHUB_EVENT_PATH")
+          curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
             -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER \
+            "https://api.github.com/repos/$REPO/pulls/$PR_NUMBER/merge" \
+            -d '{"commit_title":"Auto-merge pull request","commit_message":"This PR was auto-merged by GitHub Actions","merge_method":"merge"}'
+          curl -X PATCH -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$REPO/issues/$PR_NUMBER" \
             -d '{"state":"closed"}'
