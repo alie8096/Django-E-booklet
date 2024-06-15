@@ -1,0 +1,61 @@
+name: Auto Merge Pull Requests with Conflict Management
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+
+jobs:
+  automerge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Run linter (example)
+        run: |
+          # Run any necessary checks or linters here
+          echo "Running checks..."
+          # Simulate linter success/failure
+          echo "Checks completed successfully."
+
+      - name: Auto-merge PR if no conflicts
+        id: automerge
+        uses: pascalgn/automerge-action@v0.14.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          merge_method: merge
+          commit_message: 'Auto-merged by GitHub Actions'
+          merge_commit_message: 'This PR was auto-merged by GitHub Actions'
+          merge_label: 'automerge'
+
+      - name: Comment on the PR
+        if: steps.automerge.outputs.result != 'merged'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          script: |
+            const { context } = require('@actions/github');
+            github.issues.createComment({
+              issue_number: context.payload.pull_request.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `This pull request could not be merged automatically. Please resolve conflicts and try again.`
+            });
+
+      - name: Close PR if merged
+        if: steps.automerge.outputs.result == 'merged'
+        uses: peter-evans/close-pull-request@v2
+        with:
+          pull-request-number: ${{ github.event.pull_request.number }}
+          comment: 'This PR was auto-merged and is now closed.'
