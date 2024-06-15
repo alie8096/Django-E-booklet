@@ -31,11 +31,13 @@ jobs:
 
       - name: Merge Pull Request if Approved
         if: steps.validate_pr.outputs.approved == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
           echo "Merging PR #$PR_NUMBER"
 
-          # Merge the pull request using GitHub CLI
-          gh pr merge $PR_NUMBER --squash --auto
+          # Merge the pull request using GitHub API
+          curl -X PUT \
+            -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/merge \
+            -d '{"merge_method":"squash"}'
