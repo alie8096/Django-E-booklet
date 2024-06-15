@@ -1,0 +1,23 @@
+{
+  "name": "Django E-booklet Development Environment",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.8",
+  "extensions": [
+    "ms-python.python",
+    "yzhang.markdown-all-in-one",
+    "streetsidesoftware.code-spell-checker",
+    "bierner.lit-html",
+    "DavidAnson.vscode-markdownlint",
+    "esbenp.prettier-vscode"
+  ],
+  "postCreateCommand": "pip install -r requirements.txt",
+  "settings": {
+    "cSpell.language": "en,fa",
+    "cSpell.diagnosticLevel": "hint",
+    "editor.wordWrap": "on",
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": true,
+      "strings": true
+    }
+  }
+}
