@@ -1,4 +1,4 @@
-name: Auto Merge with Validation
+name: Auto Merge
 
 on:
   pull_request:
@@ -16,27 +16,28 @@ jobs:
       - name: Validate Pull Request
         id: validate_pr
         run: |
-          # Validate if the PR meets criteria here
-          # Example: Check for any unethical changes
-          if grep -q -R "password" ${{ github.event.pull_request.head.repo.full_name }}; then
-            echo "::error::Pull Request contains unethical changes (e.g., password leak)."
-            exit 1
-          fi
+          PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          echo "Checking PR #$PR_NUMBER"
           
-          # Example: Check for structural changes not allowed
-          if grep -q -R "todo" ${{ github.event.pull_request.head.repo.full_name }}; then
-            echo "::error::Pull Request contains structural changes not allowed (e.g., adding TODOs)."
+          # Example validation: Check for specific patterns in PR title
+          PR_TITLE=$(jq --raw-output .pull_request.title "$GITHUB_EVENT_PATH")
+          if [[ "$PR_TITLE" != *"fix"* ]]; then
+            echo "::error::Pull Request title must include 'fix'"
+            echo "::set-output name=approved::false"
             exit 1
           fi
 
-      - name: Merge Pull Request if Valid
-        if: steps.validate_pr.outcome == 'success'
-        uses: pascalgn/automerge-action@v0.14.3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          merge_method: squash
+          echo "::set-output name=approved::true"
 
-      - name: Notify if Pull Request is Invalid
-        if: steps.validate_pr.outcome == 'failure'
+      - name: Merge Pull Request if Approved
+        if: steps.validate_pr.outputs.approved == 'true'
         run: |
-          echo "Validation failed for the Pull Request. Please review the comments and fix the issues."
+          PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          echo "Merging PR #$PR_NUMBER"
+
+          # Merge the pull request using GitHub API
+          curl -X PUT \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER/merge \
+            -d '{"merge_method":"squash"}'
