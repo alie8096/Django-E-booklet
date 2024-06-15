@@ -20,6 +20,7 @@ jobs:
             # Use GitHub CLI or API to add comment or merge PR
             # Example using GitHub CLI:
             # gh pr comment <PR_number> --body "Automated response: Your PR targeting seasons-source branch has been reviewed."
+            gh pr comment ${{ github.event.number }} --body "Automated response: Your PR targeting seasons-source branch has been reviewed."
           else
             echo "PR is not targeting seasons-source branch. No response added."
           fi
