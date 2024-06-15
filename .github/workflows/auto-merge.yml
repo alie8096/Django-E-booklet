@@ -23,6 +23,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           merge_method: merge
-          branch: main
+          commit_message: 'Auto-merged by GitHub Actions'
           title: 'Auto-merge pull request'
           body: 'This PR was auto-merged by GitHub Actions'
+
+      - name: Close Pull Request
+        if: success()
+        run: |
+          PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          curl -X PATCH \
+            -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/pulls/$PR_NUMBER \
+            -d '{"state":"closed"}'
