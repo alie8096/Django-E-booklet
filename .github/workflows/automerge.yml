@@ -17,16 +17,16 @@ jobs:
       run: |
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
         if grep -vqE '\.md$' changed_files.txt; then
-          echo "::set-output name=non_md_files::true"
+          echo "non_md_files=true" >> $GITHUB_ENV
         else
-          echo "::set-output name=non_md_files::false"
+          echo "non_md_files=false" >> $GITHUB_ENV
         fi
 
     - name: Merge PR if only Markdown files changed
-      if: steps.file_changes.outputs.non_md_files == 'false'
+      if: env.non_md_files == 'false'
       uses: actions/github-script@v4
       with:
-        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        github-token: ${{ secrets.ACCESS_TOKEN }}
         script: |
           const pr_number = context.payload.pull_request.number;
           await github.pulls.merge({
