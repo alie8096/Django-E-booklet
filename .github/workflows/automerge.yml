@@ -29,12 +29,12 @@ jobs:
         id: check_markdown
         run: |
           git fetch origin seasons-source
-          git diff-tree --no-commit-id --name-only -r origin/seasons-source HEAD | grep -q '^season-.*\.md$'
-          if [ $? -eq 0 ]; then
-            echo "::set-output name=markdown_only::true"
+          if git diff-tree --no-commit-id --name-only -r origin/seasons-source HEAD | grep -q '^season-.*\.md$'; then
+            echo "markdown_only=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=markdown_only::false"
+            echo "markdown_only=false" >> $GITHUB_ENV
           fi
+
 
       - name: Auto-approve and merge
         if: steps.check_markdown.outputs.markdown_only == 'true'
