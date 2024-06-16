@@ -28,12 +28,13 @@ jobs:
       - name: Check for only markdown changes
         id: check_markdown
         run: |
-          FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          FILES=$(git diff --name-only origin/seasons-source...HEAD)
           if echo "$FILES" | grep -qv '^season-.*\.md$'; then
             echo "::set-output name=markdown_only::false"
           else
             echo "::set-output name=markdown_only::true"
           fi
+
 
 
       - name: Auto-approve
