@@ -42,6 +42,6 @@ jobs:
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
           gh pr merge $PR_NUMBER --auto --squash --delete-branch
           gh pr comment $PR_NUMBER --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
-
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
