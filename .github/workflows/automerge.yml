@@ -7,7 +7,8 @@ on:
 
 jobs:
   auto_merge:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -15,10 +16,14 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq
+          sudo apt-get install -y jq curl
 
-      - name: Install GitHub CLI
-        uses: actions/setup-gh-cli@v2
+      - name: Download and install GitHub CLI
+        run: |
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh -y
 
       - name: Check for only markdown changes
         id: check_markdown
