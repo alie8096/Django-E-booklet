@@ -29,15 +29,12 @@ jobs:
         id: check_markdown
         run: |
           git fetch origin seasons-source
-          FILES=$(git diff --name-only origin/seasons-source...HEAD)
-          if echo "$FILES" | grep -qv '^season-.*\.md$'; then
-            echo "::set-output name=markdown_only::false"
-          else
+          git diff-tree --no-commit-id --name-only -r origin/seasons-source HEAD | grep -q '^season-.*\.md$'
+          if [ $? -eq 0 ]; then
             echo "::set-output name=markdown_only::true"
+          else
+            echo "::set-output name=markdown_only::false"
           fi
-
-
-
 
       - name: Auto-approve
         if: steps.check_markdown.outputs.markdown_only == 'true'
