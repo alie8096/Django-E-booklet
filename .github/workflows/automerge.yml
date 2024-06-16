@@ -28,12 +28,14 @@ jobs:
       - name: Check for only markdown changes
         id: check_markdown
         run: |
+          git fetch origin seasons-source
           FILES=$(git diff --name-only origin/seasons-source...HEAD)
           if echo "$FILES" | grep -qv '^season-.*\.md$'; then
             echo "::set-output name=markdown_only::false"
           else
             echo "::set-output name=markdown_only::true"
           fi
+
 
 
 
