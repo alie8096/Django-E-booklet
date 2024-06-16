@@ -47,6 +47,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
+      - name: Merge pull request
+        if: steps.check_markdown.outputs.markdown_only == 'true'
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --auto --squash --admin --delete-branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
     
       - name: Comment on pull request
         if: steps.check_markdown.outputs.markdown_only == 'true'
