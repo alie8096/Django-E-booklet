@@ -14,9 +14,10 @@ jobs:
 
       - name: Download and install GitHub CLI
         run: |
-          curl -fsSL https://github.com/cli/cli/releases/latest/download/gh_2.34.0_linux_amd64.tar.gz -o ghcli.tar.gz
+          GH_CLI_VERSION=$(curl -s https://api.github.com/repos/cli/cli/releases/latest | jq -r '.tag_name')
+          curl -fsSL https://github.com/cli/cli/releases/download/${GH_CLI_VERSION}/gh_${GH_CLI_VERSION#v}_linux_amd64.tar.gz -o ghcli.tar.gz
           tar -xzf ghcli.tar.gz
-          sudo mv gh_2.34.0_linux_amd64/bin/gh /usr/local/bin/gh
+          sudo mv gh_${GH_CLI_VERSION#v}_linux_amd64/bin/gh /usr/local/bin/gh
 
       - name: Check for only markdown changes
         id: check_markdown
