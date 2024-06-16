@@ -26,7 +26,7 @@ jobs:
       if: steps.file_changes.outputs.non_md_files == 'false'
       uses: actions/github-script@v4
       with:
-        github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
           const pr_number = context.payload.pull_request.number;
           await github.pulls.merge({
