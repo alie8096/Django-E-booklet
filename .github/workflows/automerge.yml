@@ -1,56 +1,50 @@
-name: Auto Merge and Auto Comment on PRs
+name: Auto Merge Markdown Pull Requests
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    paths:
+      - 'season-*.md'
 
 jobs:
-  auto-merge-comment:
+  auto_merge:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14'
-
-      - name: Run linter (example)
+      - name: Install GitHub CLI
         run: |
-          # Run any necessary checks or linters here
-          echo "Running checks..."
-          # Simulate linter success/failure
-          echo "Checks completed successfully."
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
+          sudo apt update
+          sudo apt install gh
 
-      - name: Auto merge pull request
-        id: automerge
-        uses: pascalgn/automerge-action@v0.16.3
+      - name: Check for only markdown changes
+        id: check_markdown
+        run: |
+          FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          if echo "$FILES" | grep -qv '^season-.*\.md$'; then
+            echo "::set-output name=markdown_only::false"
+          else
+            echo "::set-output name=markdown_only::true"
+          fi
+
+      - name: Auto-approve
+        if: steps.check_markdown.outputs.markdown_only == 'true'
+        uses: hmarr/auto-approve-action@v2.1.0
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Merge pull request
+        if: steps.check_markdown.outputs.markdown_only == 'true'
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --auto --squash --admin --delete-branch
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}  # Use the default token for GitHub Actions
-        with:
-          merge_method: merge
-          commit_message: 'Auto-merged by GitHub Actions'
-          merge_commit_message: 'This PR was auto-merged by GitHub Actions'
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: Comment on PR if not merged
-        if: steps.automerge.outputs.result != 'merged'
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { context, github } = require('@actions/github');
-            github.issues.createComment({
-              issue_number: context.payload.pull_request.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: 'This pull request could not be merged automatically. Please resolve conflicts and try again.'
-            });
-
-      - name: Close PR if merged
-        if: steps.automerge.outputs.result == 'merged'
-        uses: peter-evans/close-pull-request@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ github.event.pull_request.number }}
-          comment: 'This PR was auto-merged and is now closed.'
+      - name: Comment on pull request
+        if: steps.check_markdown.outputs.markdown_only == 'true'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
