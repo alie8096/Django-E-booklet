@@ -44,7 +44,7 @@ jobs:
           gh pr comment $PR_NUMBER --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
+    
       - name: Comment on pull request
         if: steps.check_markdown.outputs.markdown_only == 'true'
         run: |
@@ -53,11 +53,5 @@ jobs:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
 
-      - name: Comment on pull request
-        if: steps.check_markdown.outputs.markdown_only == 'true'
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
 
