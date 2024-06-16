@@ -9,32 +9,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Check for non-Markdown file changes
-      id: file_changes
-      run: |
-        git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
-        if grep -vqE '\.md$' changed_files.txt; then
-          echo "non_md_files=true" >> $GITHUB_ENV
-        else
-          echo "non_md_files=false" >> $GITHUB_ENV
-        fi
+      - name: Check for only Markdown changes in seasons-source branch
+        id: check_markdown
+        run: |
+          git fetch origin seasons-source  # فراخوانی اطلاعات برنچ seasons-source
+          git diff-tree --no-commit-id --name-only -r origin/seasons-source HEAD | grep -E '^season-.*\.md$'
+          if [ $? -eq 0 ]; then
+            echo "::set-output name=markdown_only::true"
+          else
+            echo "::set-output name=markdown_only::false"
+          fi
 
-    - name: Merge PR if only Markdown files changed
-      if: env.non_md_files == 'false'
-      uses: actions/github-script@v4
-      with:
-        github-token: ${{ secrets.ACCESS_TOKEN }}
-        script: |
-          async function run() {
-            const pr_number = context.payload.pull_request.number;
-            await github.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr_number,
-              merge_method: 'squash'
-            });
-          }
-          run();
+      - name: Merge PR if only Markdown files changed
+        if: steps.check_markdown.outputs.markdown_only == 'true'
+        uses: actions/github-script@v4
+        with:
+          github-token: ${{ secrets.ACCESS_TOKEN }}
+          script: |
+            async function run() {
+              const pr_number = context.payload.pull_request.number;
+              await github.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr_number,
+                merge_method: 'squash'
+              });
+            }
+            run();
