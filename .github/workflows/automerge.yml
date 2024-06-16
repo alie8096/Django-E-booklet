@@ -7,7 +7,7 @@ on:
 
 jobs:
   auto_merge:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -20,8 +20,8 @@ jobs:
 
       - name: Download and install GitHub CLI
         run: |
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+          sudo apt-add-repository https://cli.github.com/packages
           sudo apt update
           sudo apt install gh -y
 
@@ -29,29 +29,19 @@ jobs:
         id: check_markdown
         run: |
           git fetch origin seasons-source
-          git diff-tree --no-commit-id --name-only -r origin/seasons-source HEAD | grep -q '^season-.*\.md$'
-          if [ $? -eq 0 ]; then
-            echo "::set-output name=markdown_only::true"
-          else
+          FILES=$(git diff --name-only origin/seasons-source...HEAD -- 'season-*.md')
+          if [ -z "$FILES" ]; then
             echo "::set-output name=markdown_only::false"
+          else
+            echo "::set-output name=markdown_only::true"
           fi
 
-      - name: Auto-approve
-        if: steps.check_markdown.outputs.markdown_only == 'true'
-        uses: hmarr/auto-approve-action@v2.1.0
-        with:
-          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-      - name: Merge pull request
+      - name: Auto-approve and merge
         if: steps.check_markdown.outputs.markdown_only == 'true'
         run: |
-          gh pr merge ${{ github.event.pull_request.number }} --auto --squash --admin --delete-branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          gh pr merge $PR_NUMBER --auto --squash --delete-branch
+          gh pr comment $PR_NUMBER --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
 
-      - name: Comment on pull request
-        if: steps.check_markdown.outputs.markdown_only == 'true'
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
