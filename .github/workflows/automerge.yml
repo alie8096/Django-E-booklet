@@ -1,63 +1,37 @@
-ame: Auto Merge Markdown Pull Requests
+name: Auto-merge Markdown-only PRs
 
 on:
   pull_request:
-    paths:
-      - 'season-*.md'
+    types: [opened, synchronize]
 
 jobs:
-  auto_merge:
+  check_markdown_changes:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y jq curl
+    - name: Check for non-Markdown file changes
+      id: file_changes
+      run: |
+        git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
+        if grep -vqE '\.md$' changed_files.txt; then
+          echo "::set-output name=non_md_files::true"
+        else
+          echo "::set-output name=non_md_files::false"
+        fi
 
-      - name: Download and install GitHub CLI
-        run: |
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-          sudo apt update
-          sudo apt install gh -y
-
-      - name: Check for only markdown changes
-        id: check_markdown
-        run: |
-          git fetch origin seasons-source
-          if git diff-tree --no-commit-id --name-only -r origin/seasons-source HEAD | grep -q '^season-.*\.md$'; then
-            echo "markdown_only=true" >> $GITHUB_ENV
-          else
-            echo "markdown_only=false" >> $GITHUB_ENV
-          fi
-
-
-      - name: Auto-approve and merge
-        if: steps.check_markdown.outputs.markdown_only == 'true'
-        run: |
-          cat "$GITHUB_EVENT_PATH"
-          PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-          echo "PR_NUMBER: $PR_NUMBER"
-          gh pr merge $PR_NUMBER --auto --squash --delete-branch
-          gh pr comment $PR_NUMBER --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
-      - name: Merge pull request
-        if: steps.check_markdown.outputs.markdown_only == 'true'
-        run: |
-          gh pr merge ${{ github.event.pull_request.number }} --auto --squash --admin --delete-branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-    
-      - name: Comment on pull request
-        if: steps.check_markdown.outputs.markdown_only == 'true'
-        run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
-        env:
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-
+    - name: Merge PR if only Markdown files changed
+      if: steps.file_changes.outputs.non_md_files == 'false'
+      uses: actions/github-script@v4
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const pr_number = context.payload.pull_request.number;
+          await github.pulls.merge({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: pr_number,
+            merge_method: 'squash'
+          });
