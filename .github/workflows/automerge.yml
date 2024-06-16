@@ -39,11 +39,14 @@ jobs:
       - name: Auto-approve and merge
         if: steps.check_markdown.outputs.markdown_only == 'true'
         run: |
+          cat "$GITHUB_EVENT_PATH"
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          echo "PR_NUMBER: $PR_NUMBER"
           gh pr merge $PR_NUMBER --auto --squash --delete-branch
           gh pr comment $PR_NUMBER --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
     
       - name: Comment on pull request
         if: steps.check_markdown.outputs.markdown_only == 'true'
