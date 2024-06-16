@@ -1,15 +1,9 @@
-name: Combined Workflows
+ame: Auto Merge Markdown Pull Requests
 
 on:
   pull_request:
-    branches:
-      - seasons-source
     paths:
       - 'season-*.md'
-  workflow_run:
-    workflows: ["Combined Workflows"]
-    types:
-      - completed
 
 jobs:
   auto_merge:
@@ -41,77 +35,29 @@ jobs:
             echo "markdown_only=false" >> $GITHUB_ENV
           fi
 
+
       - name: Auto-approve and merge
-        if: env.markdown_only == 'true'
+        if: steps.check_markdown.outputs.markdown_only == 'true'
         run: |
+          cat "$GITHUB_EVENT_PATH"
           PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
+          echo "PR_NUMBER: $PR_NUMBER"
           gh pr merge $PR_NUMBER --auto --squash --delete-branch
           gh pr comment $PR_NUMBER --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: Comment on pull request
-        if: env.markdown_only == 'true'
+      - name: Merge pull request
+        if: steps.check_markdown.outputs.markdown_only == 'true'
         run: |
-          PR_NUMBER=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
-          gh pr comment $PR_NUMBER --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
+          gh pr merge ${{ github.event.pull_request.number }} --auto --squash --admin --delete-branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+    
+      - name: Comment on pull request
+        if: steps.check_markdown.outputs.markdown_only == 'true'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "This pull request has been automatically approved and merged because it only contains changes to markdown files."
         env:
           GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-  convert_and_deploy:
-    needs: auto_merge
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout seasons-source branch
-        uses: actions/checkout@v2
-        with:
-          ref: seasons-source
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Create converted_html directory if not exists
-        run: |
-          if [ ! -d "converted_html" ]; then
-            mkdir converted_html
-          fi
-        shell: bash
-
-      - name: Convert Markdown to HTML
-        run: |
-          shopt -s nullglob
-          for file in season-*.md; do
-            python convertor.py "$file" "converted_html/$(basename "${file%.md}.html")" "$(basename "${file%.md}")"
-          done
-        shell: bash
-
-      - name: Ensure converted_html directory is not empty
-        run: |
-          ls -l converted_html
-
-      - name: Checkout master branch
-        uses: actions/checkout@v2
-        with:
-          ref: master
-          persist-credentials: true
-
-      - name: Copy converted files to master branch
-        run: |
-          shopt -s nullglob
-          files=(converted_html/*)
-          if [ ${#files[@]} -gt 0 ]; then
-            cp -r converted_html/* seasons-html/
-            git add seasons-html/
-            git commit -m "Update HTML files"
-            git push origin master
-          else
-            echo "No HTML files found in converted_html/"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
