@@ -6,31 +6,20 @@ on:
       - seasons-source
 
 jobs:
-  auto-merge:
+  auto_merge:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
 
-      - name: Check for non-Markdown files
-        run: |
-          non_md_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -v '\.md$' || true)
-          if [ -n "$non_md_files" ]; then
-            echo "Non-Markdown files detected:"
-            echo "$non_md_files"
-            exit 1
-          fi
+      - name: Auto Merge Pull Request
+        uses: KeisukeYamashita/auto-pull-request-merge@v1.0.6
+        with:
+          token: ${{ secrets.GH_TOKEN }}  # از توکن تعبیه شده GitHub استفاده می‌کنیم
+          pullRequestNumber: ${{ github.event.pull_request.number }}
+          repository: ${{ github.repository }}
+          strategy: squash  # روش مرج را squash قرار داده‌ایم
+          checkStatus: true  # بررسی وضعیت‌ها قبل از مرج فعال است
+          labels: "automerge"  # برچسبی که درخواست‌های مرج اتوماتیک را مشخص می‌کند
 
-      - name: Merge Pull Request (if only Markdown files changed)
-        if: success()
-        run: |
-          git checkout ${{ github.event.pull_request.head.sha }}
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
-          git checkout -B merge-branch
-          git merge --squash ${{ github.event.pull_request.head.sha }}
-          git commit -m "Squash merge PR #${{ github.event.pull_request.number }}"
-          git push origin merge-branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
