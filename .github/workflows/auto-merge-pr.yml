@@ -15,16 +15,17 @@ jobs:
 
     - name: Check for non-Markdown files
       run: |
-        non_md_files=$(git diff --name-only HEAD^ HEAD | grep -v '\.md$' || true)
+        non_md_files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep -v '\.md$' || true)
         if [ -n "$non_md_files" ]; then
           echo "Non-Markdown files detected:"
           echo "$non_md_files"
           exit 1
+        fi
 
     - name: Enable auto-merge
       if: success()
       uses: peter-evans/enable-pull-request-automerge@v2
       with:
-        token: ${{ secrets.GH_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}
         pull-request-number: ${{ github.event.pull_request.number }}
         merge-method: squash
