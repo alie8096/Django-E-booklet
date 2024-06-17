@@ -16,10 +16,9 @@ jobs:
       - name: Auto Merge Pull Request
         uses: KeisukeYamashita/auto-pull-request-merge@v1.0.6
         with:
-          token: ${{ secrets.GH_TOKEN }}  # از توکن تعبیه شده GitHub استفاده می‌کنیم
+          token: ${{ secrets.GH_TOKEN }}  # از توکن GH_TOKEN استفاده می‌کنیم
           pullRequestNumber: ${{ github.event.pull_request.number }}
           repository: ${{ github.repository }}
-          strategy: squash  # روش مرج را squash قرار داده‌ایم
+          strategy: squash  # روش مرج را تعیین می‌کنیم (مثلا squash)
           checkStatus: true  # بررسی وضعیت‌ها قبل از مرج فعال است
           labels: "automerge"  # برچسبی که درخواست‌های مرج اتوماتیک را مشخص می‌کند
-
