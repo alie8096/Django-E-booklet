@@ -19,7 +19,7 @@ jobs:
         run: echo ${{ env.GIT_COMMIT_AUTHOR_NAME }} > AUTHOR
 
       - name: Raise PR
-        id: demo-1
+        id: create-pr
         uses: peter-evans/create-pull-request@v3
         with:
           branch: "auto-per-branch"
@@ -33,17 +33,17 @@ jobs:
           delete-branch: true
 
       - name: Print PR number
-        run: echo "PR number is ${{ steps.demo-1.outputs.pull-request-number }}"
+        run: echo "PR number is ${{ steps.create-pr.outputs.pull-request-number }}"
 
       - name: Approve Pull Request
         uses: juliangruber/approve-pull-request-action@v1
         with:
           github-token: ${{ secrets.GH_TOKEN }}
-          number: ${{ steps.demo-1.outputs.pull-request-number }}
+          number: ${{ steps.create-pr.outputs.pull-request-number }}
 
       - name: Merge Pull Request
         uses: juliangruber/merge-pull-request-action@v1
         with:
           github-token: ${{ secrets.GH_TOKEN }}
-          number: ${{ steps.demo-1.outputs.pull-request-number }}
+          number: ${{ steps.create-pr.outputs.pull-request-number }}
           method: squash
