@@ -32,6 +32,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           delete-branch: true
 
+      - name: Print PR number
+        run: echo "PR number is ${{ steps.demo-1.outputs.pull-request-number }}"
+
       - name: Approve Pull Request
         uses: juliangruber/approve-pull-request-action@v1
         with:
