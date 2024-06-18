@@ -49,3 +49,27 @@ jobs:
           github-token: ${{ secrets.GH_TOKEN }}
           number: ${{ steps.create-pr.outputs.pull-request-number }}
           method: squash
+
+  enableAutoMerge:
+    needs: updateAuthor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable Auto Merge
+        run: |
+          pr_number=${{ needs.updateAuthor.outputs['create-pr'].pull-request-number }}
+          curl -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/merge \
+          -d '{"merge_method":"squash"}'
+
+  confirmAutoMerge:
+    needs: enableAutoMerge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm Auto Merge
+        run: |
+          pr_number=${{ needs.updateAuthor.outputs['create-pr'].pull-request-number }}
+          curl -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/pulls/${pr_number}/auto_merge \
+          -d '{"enabled":true}'
