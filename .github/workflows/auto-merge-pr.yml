@@ -1,24 +1,46 @@
-name: Auto Merge Markdown PRs
+name: Demo to create automatic PR
 
 on:
-  pull_request:
+  push:
     branches:
       - seasons-source
 
 jobs:
-  auto_merge:
+  updateAuthor:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
+      - name: checking out code
         uses: actions/checkout@v2
 
-      - name: Auto Merge Pull Request
-        uses: KeisukeYamashita/auto-pull-request-merge@v1.0.6
+      - name: extract git commit data
+        uses: rlespinasse/git-commit-data-action@v1.0.0
+
+      - name: Update author information
+        run: echo ${{ env.GIT_COMMIT_AUTHOR_NAME }} > AUTHOR
+
+      - name: Raise PR
+        id: demo-1
+        uses: peter-evans/create-pull-request@v3
         with:
-          token: ${{ secrets.GH_TOKEN }}  # از توکن GH_TOKEN استفاده می‌کنیم
-          pullRequestNumber: ${{ github.event.pull_request.number }}
-          repository: ${{ github.repository }}
-          strategy: squash  # روش مرج را تعیین می‌کنیم (مثلا squash)
-          checkStatus: true  # بررسی وضعیت‌ها قبل از مرج فعال است
-          labels: "automerge"  # برچسبی که درخواست‌های مرج اتوماتیک را مشخص می‌کند
+          branch: "auto-per-branch"
+          base: seasons-sources
+          title: "Auto PR"
+          committer: ${{ env.GIT_COMMIT_AUTHOR_NAME }} <${{ env.GIT_COMMIT_AUTHOR_EMAIL }}>
+          author: ${{ env.GIT_COMMIT_AUTHOR_NAME }} <${{ env.GIT_COMMIT_AUTHOR_EMAIL }}>
+          body: |
+            This is to show automatic PR creation
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-branch: true
+
+      - name: Approve Pull Request
+        uses: juliangruber/approve-pull-request-action@v1
+        with:
+          github-token: ${{ secrets.GH_TOKEN }}
+          number: ${{ steps.demo-1.outputs.pull-request-number }}
+
+      - name: Merge Pull Request
+        uses: juliangruber/merge-pull-request-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.demo-1.outputs.pull-request-number }}
+          method: squash
