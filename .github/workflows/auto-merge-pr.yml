@@ -18,7 +18,7 @@ jobs:
       - name: Check changed files
         id: check_files
         run: |
-          git diff --name-only HEAD^ HEAD > changed_files.txt
+          git diff --name-only HEAD~1 HEAD > changed_files.txt
           cat changed_files.txt
         shell: bash
 
