@@ -14,11 +14,9 @@ jobs:
         run: |
           if [ "true" == "true" ]; then
             if [ "true" == "true" ]; then
-              if [ "true" == "true" ]; then
-                echo "Non-Markdown files have changed. Failing the check."
-                exit 1
-              else
-                echo "Only Markdown files have changed. Check passed."
-              fi
+              echo "Non-Markdown files have changed. Failing the check."
+              exit 1
+            else
+              echo "Only Markdown files have changed. Check passed."
             fi
           fi
