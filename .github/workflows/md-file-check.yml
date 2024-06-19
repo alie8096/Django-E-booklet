@@ -48,7 +48,7 @@ jobs:
 
       - name: Set status based on file changes
         run: |
-          if [[ "${{ steps.check_files.outputs.non_markdown_changed }}" == "true" ]]; then
+          if ${{ steps.check_files.outputs.non_markdown_changed }}; then
             echo "Non-Markdown files have changed. Failing the check."
             exit 1
           else
