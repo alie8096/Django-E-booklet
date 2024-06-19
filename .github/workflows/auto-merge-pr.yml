@@ -1,58 +1,27 @@
-name: Demo to create automatic PR
+name: Auto-merge PRs on seasons-source
 
 on:
-  push:
+  pull_request:
     branches:
       - seasons-source
 
 jobs:
-  updateAuthor:
+  auto-merge:
     runs-on: ubuntu-latest
     steps:
-      - name: checking out code
-        uses: actions/checkout@v2
+      - name: Check out code
+        uses: actions/checkout@v3
 
-      - name: extract git commit data
-        uses: rlespinasse/git-commit-data-action@v1.x
-
-      - name: Update author information
-        run: echo ${{ env.GIT_COMMIT_AUTHOR_NAME }} > AUTHOR
-
-      - name: Raise PR
-        id: create-pr
-        uses: peter-evans/create-pull-request@v3
+      - name: Check if PR is mergeable
+        uses: peter-evans/commit-validation@v2
         with:
-          branch: "auto-per-branch"
-          base: seasons-source
-          title: "Auto PR"
-          committer: ${{ env.GIT_COMMIT_AUTHOR_NAME }} <${{ env.GIT_COMMIT_AUTHOR_EMAIL }}>
-          author: ${{ env.GIT_COMMIT_AUTHOR_NAME }} <${{ env.GIT_COMMIT_AUTHOR_EMAIL }}>
-          body: |
-            This is to show automatic PR creation
-          token: ${{ secrets.GH_TOKEN }}
-          delete-branch: true
+          required-status-checks: context
 
-      - name: Debug Commit Data
-        uses: actions/github-script@v4
+      - name: Merge PR
+        uses: peter-evans/merge-pull-request@v2
         with:
-          script: |
-            console.log(process.env.GIT_COMMIT_AUTHOR_NAME);
-            console.log(process.env.GIT_COMMIT_AUTHOR_EMAIL);
+          merge-method: squash
+          commit-message: "Merge pull request #${{ github.event.pull_request.number }}"
 
-      - name: Print PR number
-        run: echo "PR number is ${{ steps.create-pr.outputs.pull-request-number }}"
-
-      - name: Approve Pull Request
-        if: steps.create-pr.outputs.pull-request-number != ''
-        uses: juliangruber/approve-pull-request-action@v1
-        with:
-          github-token: ${{ secrets.GH_TOKEN }}
-          number: ${{ steps.create-pr.outputs.pull-request-number }}
-
-      - name: Merge Pull Request
-        if: steps.create-pr.outputs.pull-request-number != ''
-        uses: juliangruber/merge-pull-request-action@v1
-        with:
-          github-token: ${{ secrets.GH_TOKEN }}
-          number: ${{ steps.create-pr.outputs.pull-request-number }}
-          method: squash
+      - name: Close PR
+        uses: peter-evans/close-pull-request@v2
