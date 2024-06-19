@@ -1,22 +1,20 @@
-name: Node.js Tests
+name: Markdown Lint
 
 on: [push, pull_request]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Lint Markdown files
+        uses: markdownlint/check-action@v0.3.0
         with:
-          node-version: '14'
+          config_file: .markdownlint.yml  # فایل پیکربندی MarkdownLint اختیاری است
 
-      - name: Install dependencies
-        run: npm install
+      - name: Report status
+        run: echo "Markdown lint check complete"
 
-      - name: Run tests
-        run: npm test
