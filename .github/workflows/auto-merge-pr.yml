@@ -1,4 +1,4 @@
-name: Create automatic PR
+name: Demo to create automatic PR
 
 on:
   push:
@@ -53,5 +53,12 @@ jobs:
         if: steps.create-pr.outputs.pull-request-number != ''
         run: |
           gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --merge --repo ${{ github.repository }} --auto
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Close Pull Request
+        if: steps.create-pr.outputs.pull-request-number != ''
+        run: |
+          gh pr close ${{ steps.create-pr.outputs.pull-request-number }} --repo ${{ github.repository }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
