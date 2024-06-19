@@ -1,0 +1,13 @@
+version: 3
+
+groups:
+  auto_merge:
+    conditions:
+      - "#approved-reviews-by>=1"  # حداقل یک تاییدیه نیاز است
+    reviews:
+      required: 1
+    actions:
+      post-approval:
+        if:
+          - approved
+        run: gh pr merge ${{ pull_request.html_url }} --squash --admin
