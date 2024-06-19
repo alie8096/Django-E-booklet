@@ -1,0 +1,41 @@
+name: Markdown File Check
+
+on: [push, pull_request]
+
+jobs:
+  check-markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Check for non-Markdown file changes
+        id: check_files
+        run: |
+          # Get a list of files changed in the pull request
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+
+          # Initialize a flag to false
+          NON_MARKDOWN_CHANGED=false
+
+          # Check each file
+          for FILE in $CHANGED_FILES; do
+            if [[ $FILE != *.md ]]; then
+              NON_MARKDOWN_CHANGED=true
+              echo "Non-Markdown file changed: $FILE"
+              break
+            fi
+          done
+
+          # Export the result
+          echo "::set-output name=non_markdown_changed::$NON_MARKDOWN_CHANGED"
+
+      - name: Fail if non-Markdown files are changed
+        if: steps.check_files.outputs.non_markdown_changed == 'true'
+        run: |
+          echo "Non-Markdown files have changed. Failing the check."
+          exit 1
+
+      - name: Success if only Markdown files are changed
+        if: steps.check_files.outputs.non_markdown_changed == 'false'
+        run: echo "Only Markdown files have changed. Check passed."
