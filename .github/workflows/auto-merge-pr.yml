@@ -32,6 +32,13 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           delete-branch: true
 
+      - name: Debug Commit Data
+        uses: actions/github-script@v4
+        with:
+          script: |
+            console.log(process.env.GIT_COMMIT_AUTHOR_NAME);
+            console.log(process.env.GIT_COMMIT_AUTHOR_EMAIL);
+
       - name: Print PR number
         run: echo "PR number is ${{ steps.create-pr.outputs.pull-request-number }}"
 
