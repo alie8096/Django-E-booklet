@@ -1,4 +1,4 @@
-name: Automatic Pull Request Workflow
+name: Demo to create automatic PR
 
 on:
   push:
@@ -6,61 +6,41 @@ on:
       - seasons-source
 
 jobs:
-  createPullRequest:
+  updateAuthor:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: checking out code
         uses: actions/checkout@v2
 
-      - name: Set Git config
-        run: |
-          git config --global user.name "${{ github.actor }}"
-          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+      - name: extract git commit data
+        uses: rlespinasse/git-commit-data-action@v1.0.0
 
-      - name: Extract commit author information
-        id: extract-commit-data
-        run: |
-          COMMIT_AUTHOR_NAME=$(git log -1 --pretty=format:'%an')
-          COMMIT_AUTHOR_EMAIL=$(git log -1 --pretty=format:'%ae')
-          echo "::set-output name=author_name::${COMMIT_AUTHOR_NAME}"
-          echo "::set-output name=author_email::${COMMIT_AUTHOR_EMAIL}"
+      - name: Update author information
+        run: echo ${{ env.GIT_COMMIT_AUTHOR_NAME }} > AUTHOR
 
-      - name: Create automatic pull request
-        id: create-pr
+      - name: Raise PR
+        id: demo-1
         uses: peter-evans/create-pull-request@v3
         with:
-          branch: auto-per-branch
-          base: seasons-source
+          branch: "auto-per-branch"
+          base: seasons-sources
           title: "Auto PR"
+          committer: ${{ env.GIT_COMMIT_AUTHOR_NAME }} <${{ env.GIT_COMMIT_AUTHOR_EMAIL }}>
+          author: ${{ env.GIT_COMMIT_AUTHOR_NAME }} <${{ env.GIT_COMMIT_AUTHOR_EMAIL }}>
           body: |
-            This is an automatic pull request created by GitHub Actions.
-          commit-message: "Automatic commit message"
-          committer: ${{ steps.extract-commit-data.outputs.author_name }} <${{ steps.extract-commit-data.outputs.author_email }}>
-          author: ${{ steps.extract-commit-data.outputs.author_name }} <${{ steps.extract-commit-data.outputs.author_email }}>
+            This is to show automatic PR creation
           token: ${{ secrets.GITHUB_TOKEN }}
           delete-branch: true
 
-      - name: Print PR number
-        run: echo "Pull Request number is ${{ steps.create-pr.outputs.pull-request-number }}"
-
       - name: Approve Pull Request
-        if: steps.create-pr.outputs.pull-request-number != ''
         uses: juliangruber/approve-pull-request-action@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          number: ${{ steps.create-pr.outputs.pull-request-number }}
+          github-token: ${{ secrets.GH_TOKEN }}
+          number: ${{ steps.demo-1.outputs.pull-request-number }}
 
       - name: Merge Pull Request
-        if: steps.create-pr.outputs.pull-request-number != ''
-        run: |
-          gh pr merge ${{ steps.create-pr.outputs.pull-request-number }} --auto --merge --repo ${{ github.repository }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Close Pull Request
-        if: steps.create-pr.outputs.pull-request-number != ''
-        run: |
-          gh pr close ${{ steps.create-pr.outputs.pull-request-number }} --repo ${{ github.repository }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+        uses: juliangruber/merge-pull-request-action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.demo-1.outputs.pull-request-number }}
+          method: squash
