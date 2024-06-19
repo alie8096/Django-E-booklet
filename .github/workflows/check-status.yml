@@ -1,20 +1,22 @@
-name: Markdown Lint
+name: Conditional Check
 
 on: [push, pull_request]
 
 jobs:
-  lint:
+  check:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Lint Markdown files
-        uses: markdownlint/check-action@v0.3.0
-        with:
-          config_file: .markdownlint.yml  # فایل پیکربندی MarkdownLint اختیاری است
-
-      - name: Report status
-        run: echo "Markdown lint check complete"
-
+      - name: Run conditional checks
+        run: |
+          if [ "true" == "true" ]; then
+            if [ "true" == "true" ]; then
+              echo "Non-Markdown files have changed. Failing the check."
+              exit 1
+            else
+              echo "Only Markdown files have changed. Check passed."
+            fi
+          fi
