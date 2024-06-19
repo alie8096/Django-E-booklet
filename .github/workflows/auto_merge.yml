@@ -1,0 +1,19 @@
+name: Auto Merge PR
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  merge:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh -y
+
+      - name: Merge PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --squash --admin
